@@ -82,9 +82,79 @@ trade_limit_states    → query order states by hash
 - **Leverage**: 1–20x depending on market. Check `market_list` for max leverage.
 - **Signing paths**:
   - Cosmos: password required per call; signs via Cosmos tx with InjectiveTx wrapper
-  - EIP-712: MetaMask-compatible; same secp256k1 key, signs EIP-712 typed data — no chain switch needed
+  - EIP-712: MetaMask-compatible; same secp256k1 key, signs EIP-712 typed data
 - **Slippage**: Market orders use oracle price ± slippage. Default: 1% open, 5% close.
 - **Fees**: Injective charges 0 gas for trading. Taker fee ~0.1%, maker fee ~0.05%.
+
+## EIP-712 Browser Signing — Critical Notes
+
+These apply when implementing `tx.ts` / `openTrade()` / `closeTrade()` in a browser frontend:
+
+### SDK Version
+Pin to exactly `1.17.8` — do NOT use `^1.17.8`:
+```json
+"@injectivelabs/sdk-ts": "1.17.8",
+"@injectivelabs/networks": "1.17.8",
+"@injectivelabs/ts-types": "1.17.8"
+```
+Versions 1.18+ have breaking changes that cause signature verification failure on Injective mainnet.
+
+### Chain ID requirement
+MetaMask must be on **Ethereum mainnet (1)** or **Injective EVM (2525)**.
+Any other chain (Arbitrum=42161, custom chains, etc.) will broadcast but fail with:
+`"signature verification failed: unable to verify signer signature of EIP712 typed data"`
+
+Add a guard before signing:
+```typescript
+const INJECTIVE_ACCEPTED_EVM_CHAINS: Record<number, string> = {
+  1: 'Ethereum mainnet',
+  2525: 'Injective EVM',
+}
+const chainId = parseInt(await window.ethereum.request({ method: 'eth_chainId' }), 16)
+if (!INJECTIVE_ACCEPTED_EVM_CHAINS[chainId]) throw new Error(
+  `Switch MetaMask to Ethereum mainnet or Injective EVM (2525) — chain ${chainId} not supported`
+)
+```
+
+### Pass-through pattern (EasyPerps approach)
+Read the active MetaMask chain and pass it to BOTH `getEip712TypedData` and `createWeb3Extension`.
+**Never hardcode 2525** — MetaMask v11+ enforces that the EIP-712 domain chainId matches the active chain.
+
+```typescript
+const evmChainId = parseInt(
+  await window.ethereum!.request({ method: 'eth_chainId' }) as string, 16
+)
+// Use evmChainId in BOTH calls:
+const typedData = getEip712TypedData({ msgs: msg, tx: {...}, evmChainId })
+const web3Extension = createWeb3Extension({ evmChainId })
+```
+
+### Fee must match between signed data and broadcast tx
+**This is the #1 cause of "signature verification failed" errors.**
+`getEip712TypedData` and `createTransaction` must use the EXACT same fee.
+Without an explicit fee, `getEip712TypedData` uses the SDK default (`64000000000000 inj / 400000 gas`),
+but `createTransaction` uses whatever you pass — if they differ, the hash changes and the signature is invalid.
+
+```typescript
+const TX_FEE = {
+  amount: [{ denom: 'inj', amount: '200000000000000' }],
+  gas: '1000000',
+}
+
+// Pass TX_FEE to BOTH:
+const typedData = getEip712TypedData({ msgs, tx: {...}, fee: TX_FEE, evmChainId })
+const { txRaw } = createTransaction({ ..., fee: TX_FEE })
+```
+
+### Tool schema for Claude
+When defining browser tools for an AI to call:
+- `trade_open`: use `notional_usdt` (not `amount`) — must match `executeBrowserTool` reads
+- `trade_close`: **must include `side` and `quantity` as required fields** — Claude won't pass them otherwise and `closeTrade()` will receive `undefined`
+
+```typescript
+// trade_open required: ['symbol', 'side', 'notional_usdt', 'leverage']
+// trade_close required: ['symbol', 'side', 'quantity']
+```
 
 ## Example Conversation
 
