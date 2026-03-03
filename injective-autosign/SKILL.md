@@ -91,3 +91,27 @@ authz_revoke(granterAddress, password, granteeAddress, msgTypes)
 - Injective's fee delegation (if enabled) can cover grantee gas, enabling fully gasless session trading.
 - Expiry is in seconds from time of grant. 86400 = 24h, 259200 = 72h.
 - If the grantee key is compromised, revoke immediately — the grant is limited to trading actions only, not withdrawals.
+
+## Browser-Based AutoSign (MetaMask + EIP-712)
+
+When implementing AutoSign in a browser frontend (e.g. `autosign.ts` with `enableAutoSign`):
+
+### evmChainId must come from MetaMask at grant time
+The `evmChainId` stored in the AutoSign state must be the **actual MetaMask chain at the moment the grant tx is signed**, NOT a hardcoded value:
+
+```typescript
+// ✅ Correct — read from MetaMask
+const evmChainId = parseInt(
+  await window.ethereum.request({ method: 'eth_chainId' }), 16
+)
+
+// ❌ Wrong — hardcoding bypasses MetaMask's chain enforcement
+const evmChainId = 2525
+```
+
+### Valid chains for AutoSign grants
+MetaMask must be on **Ethereum mainnet (1)** or **Injective EVM (2525)** when granting AutoSign.
+The same `evmChainId` used during the grant tx MUST be used for all subsequent `broadcastAutoSign` calls.
+
+### SDK version
+Pin to exactly `@injectivelabs/sdk-ts: 1.17.8`. Newer versions (1.18+) produce different EIP-712 typed data that Injective mainnet rejects.
