@@ -35,7 +35,7 @@ Server verifies + settles via facilitator
 npm install @x402/injective
 ```
 
-Source: `/Users/ck/dev/x402/packages/x402-injective/`
+Source: `packages/x402-injective/` (in the x402 repo)
 
 ## Server: Protect an Endpoint
 
@@ -100,8 +100,8 @@ await wusdtContract.deposit(amount)
 // Use WUSDT_ADDRESS as the `asset` in x402 payment requirements
 ```
 
-Contract source: `/Users/ck/dev/x402/packages/x402-injective/contracts/WrappedUSDT.sol`
-Deploy script: `/Users/ck/dev/x402/examples/scripts/deploy-wrapped-usdt.ts`
+Contract source: `packages/x402-injective/contracts/WrappedUSDT.sol`
+Deploy script: `examples/scripts/deploy-wrapped-usdt.ts`
 
 ## Injective EVM Network Config
 
@@ -134,5 +134,5 @@ const analytics = await x402Client.fetch(
 
 - The facilitator wallet needs INJ for gas to settle payments on-chain.
 - EIP-3009 authorizations include a deadline — default 60s. Size accordingly.
-- The x402 package is under active development. Check `/Users/ck/dev/x402/` for latest.
+- The x402 package is under active development. Check the x402 repo for latest.
 - For testnet, use `INJECTIVE_TESTNET_CAIP2` and deploy WUSDT to testnet separately.
