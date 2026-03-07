@@ -41,19 +41,6 @@ Write compelling product announcement blog posts for DeFi/crypto products. The t
 - Deep-dive: 1500-2500 words
 - Quick announcement: 300-500 words
 
-## Context
-
-The user works in the Injective blockchain ecosystem, building:
-- TrueCurrent Exchange (perpetual futures DEX)
-- EasyPerps (trading frontend)
-- DexPal (market data API)
-- Hummingbot connector
-- x402 payment gateway
-- NinjaBattle (AI bot trading competition)
-- RFQ protocol for derivatives
-
-Posts often target: developers integrating with Injective, traders looking for new platforms, market makers evaluating opportunities.
-
 ## Process
 
 1. Read the relevant code/docs to understand the product deeply
