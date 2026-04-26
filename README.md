@@ -13,6 +13,8 @@ Claude Code skills that give AI agents full Injective trading capabilities via t
 | [`injective-bridge`](./injective-bridge/) | Cross-chain bridging via deBridge DLN + Peggy |
 | [`injective-autosign`](./injective-autosign/) | AuthZ delegation for session-based auto-trading |
 | [`injective-x402`](./injective-x402/) | Pay-per-query APIs using x402 protocol on Injective EVM |
+| [`injective-slack-alert`](./injective-slack-alert/) | Build a Slack alert daemon (Node.js + Express + cron + sqlite + Slack WebClient) for any on-chain or off-chain monitor |
+| [`lightsail-deploy`](./lightsail-deploy/) | Deploy any Node.js project to AWS Lightsail via SSH + PM2 |
 
 ## Prerequisites
 
