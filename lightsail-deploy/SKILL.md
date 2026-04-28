@@ -1,82 +1,121 @@
 ---
 name: lightsail-deploy
-description: Deploy a Node.js project to an AWS Lightsail server via SSH + SCP + PM2. Handles file upload, PM2 restart, nginx verification, and health checks. Use when the user says "deploy", "push to server", "update the server", or "ship it".
+description: Deploy a Node.js project to an AWS Lightsail server via SSH + rsync + PM2. Handles file upload, dependency install, PM2 restart, nginx verification, and health checks. Use when the user says "deploy", "push to server", "update the server", or "ship it".
 license: MIT
 metadata:
   author: ck
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Lightsail Deploy Skill
 
 ## Overview
 
-Deploy any Node.js project to an AWS Lightsail server. Handles the full cycle: upload files, install deps, restart PM2 process, verify health.
+Deploy a project (typically Node.js, but the same shape adapts to anything PM2 can run) to an AWS Lightsail Ubuntu server. The skill is intentionally general — all project-specific and machine-specific values are read from per-project files, never hardcoded here.
 
-## Known Servers
+## Where the specifics live
 
-Configure your servers in the project's CLAUDE.md or environment variables. Example format:
+This skill never embeds IPs, SSH key paths, app directories, PM2 process names, ports, or domains. Read them from these sources, in order:
 
-| Server | IP | SSH Key | Projects |
-|--------|-----|---------|----------|
-| Server 1 | `<server-1-ip>` | `<path-to-pem>` | project-a, project-b |
-| Server 2 | `<server-2-ip>` | `<path-to-pem>` | project-c, project-d |
+1. **`DEPLOYMENT.md` in the project root** — the canonical source for *that* project. It's gitignored (lives next to `CLAUDE.md`, never committed) and should contain:
+   - `host` — `ubuntu@<ip>`
+   - `ssh_key` — full path to the `.pem` (e.g. `~/Documents/PEM-Files/TokyoKey.pem`)
+   - `app_dir` — `/home/ubuntu/<project>`
+   - `pm2_process` — PM2 process name for this app
+   - `port` — listen port
+   - `domain` — public domain (if any)
+   - `nginx_site` — path to the nginx config (`/etc/nginx/sites-available/<domain>`)
+   - the quick deploy command sequence
+   - log/status checks, SSL renewal, rollback
+
+2. **Global `~/.claude/CLAUDE.md`** — fleet-level server inventory (which IPs exist, which keys, which projects live on which host). Use as a fallback if a project's `DEPLOYMENT.md` is missing, or to reconcile drift between projects.
+
+3. **Ask the user** — only if neither file has the answer.
+
+If `DEPLOYMENT.md` doesn't exist for a project being deployed for the first time, write one as part of the deploy. Add `DEPLOYMENT.md` and `CLAUDE.md` to `.gitignore` if they aren't already.
+
+## Pre-deploy sanity check
+
+Server location info can drift. Before deploying, verify with:
+```bash
+dig +short <domain>                                      # DNS points where you think
+ssh -i <ssh_key> <host> "pm2 list | grep <pm2_process>"  # process exists where you think
+```
 
 ## Workflow
 
-### 1. Determine target
-Ask the user or infer from the current project directory:
-- Which server IP?
-- Which SSH key?
-- What's the remote path? (e.g., `/home/ubuntu/oi-dash/`)
-- What's the PM2 process name?
-
-### 2. Upload files
+### 1. Build (if applicable)
 ```bash
-scp -i <pem> -r ./* ubuntu@<ip>:<remote_path>/
-```
-Exclude `node_modules/`, `.env`, `.git/`, `*.db` unless explicitly requested:
-```bash
-rsync -avz -e "ssh -i <pem>" --exclude node_modules --exclude .env --exclude .git --exclude '*.db' ./ ubuntu@<ip>:<remote_path>/
+npm run build   # only if the project has a build step
 ```
 
-### 3. Install dependencies (if package.json changed)
+### 2. Upload via rsync
 ```bash
-ssh -i <pem> ubuntu@<ip> "cd <remote_path> && npm install --production"
+rsync -avz \
+  --exclude node_modules --exclude .env --exclude .git --exclude .claude \
+  --exclude DEPLOYMENT.md --exclude CLAUDE.md --exclude '*.db' \
+  -e "ssh -i <ssh_key>" \
+  ./ <host>:<app_dir>/
+```
+Always exclude `DEPLOYMENT.md` and `CLAUDE.md` — those are local-only.
+
+### 3. Install dependencies (only if `package.json` / lockfile changed)
+```bash
+ssh -i <ssh_key> <host> "cd <app_dir> && npm install --omit=dev"
 ```
 
-### 4. Restart PM2
+### 4. Start or restart PM2
 ```bash
-ssh -i <pem> ubuntu@<ip> "cd <remote_path> && pm2 restart <process_name>"
+ssh -i <ssh_key> <host> "cd <app_dir> && pm2 restart <pm2_process>"
 ```
-If process doesn't exist yet:
+If the process doesn't exist yet:
 ```bash
-ssh -i <pem> ubuntu@<ip> "cd <remote_path> && pm2 start server.js --name <process_name>"
+ssh -i <ssh_key> <host> "cd <app_dir> && pm2 start <entry_point> --name <pm2_process> && pm2 save"
 ```
+`pm2 save` persists the process list across reboots — only needed once per process.
 
 ### 5. Verify
 ```bash
-ssh -i <pem> ubuntu@<ip> "pm2 status <process_name>"
+ssh -i <ssh_key> <host> "pm2 status <pm2_process>"
 ```
-If there's a health endpoint, curl it:
+If a health endpoint exists, hit it via the public URL (not just localhost on the server):
 ```bash
-curl -s http://<ip>:<port>/health || curl -s http://<ip>:<port>/
+curl -s -o /dev/null -w "%{http_code}\n" https://<domain>/health
+# or
+curl -s -o /dev/null -w "%{http_code}\n" http://<server_ip>:<port>/
 ```
 
-### 6. Check logs if issues
+### 6. Tail logs if anything is off
 ```bash
-ssh -i <pem> ubuntu@<ip> "pm2 logs <process_name> --lines 20"
+ssh -i <ssh_key> <host> "pm2 logs <pm2_process> --lines 30 --nostream"
 ```
 
-## Nginx Setup (if needed for new projects)
-```bash
-ssh -i <pem> ubuntu@<ip> "sudo nano /etc/nginx/sites-available/<domain>"
-```
-Standard config: proxy_pass to localhost:<port>, SSL via certbot.
+## Nginx setup (first deploy only)
 
-## Key Notes
-- Always use `ubuntu@` as the SSH user
-- Never upload `.env` files -- they should already exist on the server
-- Check `pm2 list` first to see existing processes
-- If deploying a new project, run `pm2 save` after starting
-- For SSL: `sudo certbot --nginx -d <domain>`
+For a new project, configure nginx as a reverse proxy. The site config typically includes:
+- `proxy_pass http://localhost:<port>`
+- WebSocket upgrade headers (`Upgrade`, `Connection`) if the app uses websockets
+- Standard proxy headers (`X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`)
+- `proxy_read_timeout 86400` for long-lived connections
+
+```bash
+ssh -i <ssh_key> <host> "sudo vim /etc/nginx/sites-available/<domain>"
+ssh -i <ssh_key> <host> "sudo ln -sf /etc/nginx/sites-available/<domain> /etc/nginx/sites-enabled/"
+ssh -i <ssh_key> <host> "sudo nginx -t && sudo systemctl reload nginx"
+```
+
+## SSL with certbot (first deploy only, requires DNS to be live)
+
+Once the DNS A-record for `<domain>` resolves to the server:
+```bash
+ssh -i <ssh_key> <host> "sudo certbot --nginx -d <domain> --non-interactive --agree-tos --email <admin_email>"
+```
+If DNS isn't pointing to the server yet, stop and tell the user — don't run certbot blind. Once it's live, certbot auto-renews via systemd timer; no manual renewal needed.
+
+## Notes
+
+- SSH user is always `ubuntu@` on Lightsail Ubuntu instances.
+- Never upload `.env` — it should already exist on the server. If you need to seed one, copy it separately with `scp` and `chmod 600` it.
+- Fresh-server Node.js install: `curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install -g pm2 tsx`
+- For TypeScript projects without a build step: `pm2 start "npx tsx src/index.ts" --name <pm2_process> --cwd <app_dir>`
+- Always verify via the public URL last (after PM2 restart *and* nginx reload), not just localhost on the server.
