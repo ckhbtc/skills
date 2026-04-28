@@ -19,7 +19,7 @@ This skill never embeds IPs, SSH key paths, app directories, PM2 process names, 
 
 1. **`DEPLOYMENT.md` in the project root** — the canonical source for *that* project. It's gitignored (lives next to `CLAUDE.md`, never committed) and should contain:
    - `host` — `ubuntu@<ip>`
-   - `ssh_key` — full path to the `.pem` (e.g. `~/Documents/PEM-Files/TokyoKey.pem`)
+   - `ssh_key` — full path to the `.pem` file
    - `app_dir` — `/home/ubuntu/<project>`
    - `pm2_process` — PM2 process name for this app
    - `port` — listen port
