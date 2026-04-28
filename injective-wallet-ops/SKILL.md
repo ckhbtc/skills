@@ -53,10 +53,20 @@ key = secrets.token_hex(32)
 ```
 
 ### Address Conversion (ETH <-> INJ)
+
+Injective is EVM-compatible: every secp256k1 key has two address encodings that map 1:1. The `0x` form (40 hex chars) is what MetaMask + bridging tools show; the `inj1` form (bech32, 38 chars after the prefix) is what Cosmos RPCs, `MsgSend`, contract state, and the indexer use. Any code that accepts a user-supplied address should accept both forms and canonicalize to `inj1` before chain ops — **rate limits, dedup keys, and authz lookups must be keyed on the inj form**, otherwise a caller can dodge them by flipping encodings.
+
+Validation regexes (accept both, reject everything else):
+```
+inj1:  ^inj1[02-9ac-hj-np-z]{38}$      (bech32 charset; no b/i/o/1)
+0x:    ^0x[0-9a-fA-F]{40}$              (mixed case OK; normalize to lowercase)
+```
+
+**Python** (standalone, no SDK):
 ```python
 import bech32
 def eth_to_inj_address(eth_address: str) -> str:
-    eth_bytes = bytes.fromhex(eth_address[2:])
+    eth_bytes = bytes.fromhex(eth_address.removeprefix("0x"))
     five_bit = bech32.convertbits(eth_bytes, 8, 5)
     return bech32.bech32_encode("inj", five_bit)
 
@@ -65,6 +75,31 @@ def inj_to_eth_address(inj_address: str) -> str:
     eight_bit = bech32.convertbits(five_bit, 5, 8, False)
     return "0x" + bytes(eight_bit).hex()
 ```
+
+**Node / TypeScript** (via `@injectivelabs/sdk-ts`, preferred when the project already depends on it):
+```ts
+import { getInjectiveAddress, getEthereumAddress } from '@injectivelabs/sdk-ts';
+
+// 0x → inj1
+const inj = getInjectiveAddress('0xYourEthAddress…40hex');
+// inj1 → 0x (lowercase)
+const eth = getEthereumAddress('inj1yourbech32address…');
+```
+
+**Accept-either pattern** (server accepting an external address):
+```ts
+const INJ_BECH32 = /^inj1[02-9ac-hj-np-z]{38}$/;
+const ETH_HEX    = /^0x[0-9a-fA-F]{40}$/;
+
+function normalize(raw: string) {
+  const s = raw.trim();
+  if (INJ_BECH32.test(s)) return { inj: s,                       eth: getEthereumAddress(s).toLowerCase() };
+  if (ETH_HEX.test(s))    return { inj: getInjectiveAddress(s),  eth: s.toLowerCase() };
+  throw new Error('malformed address — expected inj1… (43 chars) or 0x… (42 chars)');
+}
+```
+
+The `PrivateKey.toBech32()` / `.toAddress()` methods on sdk-ts's `PrivateKey` return these two forms from a key directly — useful when you're generating + need both at once.
 
 ## Mass Funding
 
