@@ -1,0 +1,28 @@
+.DS_Store
+
+# Untracked skills present in this working tree but managed elsewhere
+# (Anthropic-bundled skills, third-party skills, or InjectiveLabs/agent-skills items).
+# Add a new entry here if you drop a skill in here that shouldn't be committed.
+agent-browser/
+brainstorming/
+canvas-design/
+copywriting/
+deploy-to-vercel/
+docx/
+find-skills/
+frontend-design/
+gh-cli/
+git-commit/
+injective-cli/
+ink/
+linear-cli/
+pdf/
+pptx/
+remotion-best-practices/
+skill-creator/
+slack/
+ui-ux-pro-max/
+vercel-react-best-practices/
+vue-best-practices/
+web-design-guidelines/
+xlsx/
