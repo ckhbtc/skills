@@ -14,6 +14,7 @@ Personal Claude Code skills — Injective-focused trading + ops tools, plus a fe
 | [`injective-rfq-quote`](./injective-rfq-quote/) | Provide liquidity as an RFQ market maker — receive requests, sign quotes (EIP-712 v2), stream back (testnet only) |
 | [`injective-rfq-conditional-order`](./injective-rfq-conditional-order/) | Pre-sign TP/SL signed-intents that fire on mark-price triggers (testnet only) |
 | [`injective-rfq-autosign`](./injective-rfq-autosign/) | AuthZ grants for the RFQ contract (`MsgSend` + `MsgPrivilegedExecuteContract`) — required for both MM and Retail |
+| [`injective-rfq-mm-onboarding`](./injective-rfq-mm-onboarding/) | One-shot MM onboarding — whitelist, grants, balances, smoke test (testnet only) |
 | [`injective-positions`](./injective-positions/) | Query, close, flatten derivative positions across many wallets |
 | [`injective-bridge`](./injective-bridge/) | Cross-chain bridging via deBridge DLN + Peggy |
 | [`injective-orderbook-autosign`](./injective-orderbook-autosign/) | AuthZ delegation for session-based auto-trading on the orderbook |
