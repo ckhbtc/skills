@@ -1,17 +1,26 @@
 ---
 name: injective-positions
-description: Query, close, and flatten derivative positions on Injective. Mass close all positions across wallets, flatten positions via RFQ trades using a garbage collector pattern, and query position details (quantity, margin, entry price, PnL). Supports mass operations across many wallets.
+description: Query, close, and flatten derivative positions on Injective — venue-neutral. Two close paths are supported: orderbook reduce-only market orders (fast, single wallet) and RFQ flatten via a garbage-collector pattern (better for mass-flattening many wallets and netting MM exposure). Query position details (quantity, margin, entry price, PnL) across many wallets. Supports mass operations.
 license: MIT
 metadata:
   author: ck
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Injective Position Management Skill
 
 ## Overview
 
-Query, close, and rebalance derivative positions on Injective. Supports mass operations across many wallets. Based on an Injective RFQ test framework.
+Query, close, and rebalance derivative positions on Injective. Supports mass operations across many wallets.
+
+This skill is **venue-neutral**: two close paths cover different shapes of cleanup.
+
+| Path | When to use | Mechanism | See also |
+|---|---|---|---|
+| Orderbook reduce-only market order | Single wallet, immediate close, position size fits market depth | `MsgCreateDerivativeMarketOrder` with `is_reduce_only=True`, slippage cap against mark | [`injective-orderbook-trade`](../injective-orderbook-trade/) |
+| RFQ flatten (garbage-collector) | Mass-flatten many MM/retail wallets after a test run, net exposure into a single GC wallet | RFQ contract `accept_quote`, two-phase (retail → absorber → GC) | [`injective-rfq-trade`](../injective-rfq-trade/), [`injective-rfq-quote`](../injective-rfq-quote/) (testnet only) |
+
+The query side (find a position, fetch quantity / margin / entry / mark) is identical for both paths and lives in this skill.
 
 ## Reference Code
 
