@@ -23,11 +23,11 @@ Reference end-to-end: [`InjectiveLabs/rfq-testing`](https://github.com/Injective
 
 | Trigger type | Fires when | Typical use |
 |---|---|---|
-| `mark_price_gte` | mark ≥ `trigger_price` | Take-profit for a short position; stop-loss for a long |
-| `mark_price_lte` | mark ≤ `trigger_price` | Take-profit for a long; stop-loss for a short |
+| `mark_price_gte` | mark >= `trigger_price` | Take-profit for a long position; stop-loss for a short |
+| `mark_price_lte` | mark <= `trigger_price` | Take-profit for a short position; stop-loss for a long |
 | `immediate` | always (no wait) | Indexer-driven close-now via the same signed-intent path |
 
-For `immediate`, pass `trigger_price="0"` (it's not part of the digest for that kind).
+For `immediate`, pass `trigger_price="0"`. The digest binds that fixed `"0"` value for immediate orders.
 
 ## Reduce-only constraint
 
@@ -97,8 +97,8 @@ intent_sig = sign_conditional_order_v2(
     margin="0",                                       # reduce-only
     worst_price="19.5",                               # canonical, quantized to price tick
     min_total_fill_quantity="1",
-    trigger_type="mark_price_lte",                    # take-profit on a long
-    trigger_price="20.0",                             # canonical
+    trigger_type="mark_price_gte",                    # take-profit on a long
+    trigger_price="20",                               # canonical
     cid=None,
     allowed_relayer=None,
 )
@@ -124,7 +124,7 @@ async with TakerStreamClient(env.indexer.ws_endpoint,
             "deadline_ms": deadline_ms, "direction": "short",
             "quantity": "1", "margin": "0", "worst_price": "19.5",
             "min_total_fill_quantity": "1",
-            "trigger_type": "mark_price_lte", "trigger_price": "20.0",
+            "trigger_type": "mark_price_gte", "trigger_price": "20",
             "unfilled_action": None, "cid": None, "allowed_relayer": None,
         },
         signature=intent_sig,
