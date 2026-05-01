@@ -1,6 +1,6 @@
 ---
 name: injective-derivatives-market-data
-description: Access real-time market data for Injective perpetual futures markets — venue-neutral. Query oracle prices, list all active markets with metadata (tick size, min notional, max leverage), and retrieve current spread and funding information. Same data feeds the central orderbook AND the RFQ contract; both venues quantize prices to the same `min_price_tick_size` and gate trades against the same oracle mark. Requires the Injective MCP server to be connected.
+description: Access real-time market data for Injective perpetual futures markets — venue-neutral. Query oracle prices, list all active markets with metadata (tick size, min notional, max leverage), and retrieve current spread and funding information. Orderbook and RFQ flows share market IDs, tick sizes, and oracle marks; RFQ uses those values for price protection and validation. Requires the Injective MCP server to be connected.
 license: MIT
 metadata:
   author: InjectiveLabs
@@ -27,7 +27,7 @@ market_list
 Returns per market:
 - `symbol` — e.g. BTC, ETH, INJ
 - `marketId` — 0x... hex ID used on-chain
-- `oraclePrice` — current oracle mark price (USDT)
+- `oraclePrice` — current oracle mark price in the market's quote asset
 - `minQuantityTickSize` — minimum order size
 - `minPriceTickSize` — minimum price increment
 - `initialMarginRatio` — minimum margin (1/maxLeverage)
@@ -76,7 +76,7 @@ Use `market_list` for the complete current set — new markets are added by Inje
 
 ## Notes
 
-- Prices are in USDT with 6 decimal places internally; returned as human-readable floats.
+- Prices are returned in the market's quote asset. Many mainnet perps are USDT-quoted; current RFQ testnet examples use USDC margin.
 - Oracle prices are aggregated from Band Protocol and Pyth Network feeds.
 - Funding rates are not yet exposed via MCP tools — check Helix UI for funding.
 - Market data is cached in-process for 30 seconds to reduce latency on repeated calls.
@@ -86,8 +86,8 @@ Use `market_list` for the complete current set — new markets are added by Inje
 The RFQ trading path (`injective-rfq-trade`, `injective-rfq-quote`) sits on top of the same derivatives markets, so everything this skill returns applies there too. A few RFQ-specific reminders when consuming `market_list` output for an RFQ flow:
 
 - **`min_price_tick_size`** — quote prices must be quantized to this tick before signing. Decimal strings are hashed as `keccak256(utf8(s))` in the EIP-712 v2 digest, so the wire string must be canonical (no trailing zeros, no `.0` on whole-integer ticks). For BTC perp at tick `1`, that means `"76462"` — not `"76462.0"`. See `injective-rfq-quote` for the `to_canonical(x, tick)` helper.
-- **`worst_price`** — RFQ requests carry a slippage cap that the contract enforces against the oracle mark: long ≤ mark × 1.10, short ≥ mark × 0.90 by default. Pull the mark from `market_price` and set `worst_price` accordingly.
+- **`worst_price`** — RFQ requests carry taker price protection. Current testnet validation rejects requests outside the configured mark-price band: long <= mark x 1.10, short >= mark x 0.90 by default. Pull the mark from `market_price` and set `worst_price` accordingly.
 - **`maker_fee_rate` / `taker_fee_rate`** — these are the orderbook fees. RFQ settles via `MsgPrivilegedExecuteContract`, so fees are handled by the RFQ contract config (typically zero / sponsor-paid during the testnet phase).
 - **`marketId`** — same hex on both venues. Pass through unchanged when bridging an orderbook market into an RFQ flow.
 
-RFQ is currently testnet-only; a `marketId` returned here works against both `testnet.rfq.ws.injective.network` and `testnet-grpc.injective.dev`.
+RFQ is currently testnet-only. When targeting RFQ testnet endpoints, use market IDs and tick sizes from the matching Injective testnet environment.
