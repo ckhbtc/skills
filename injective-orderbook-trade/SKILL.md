@@ -1,17 +1,19 @@
 ---
-name: injective-trade
-description: Execute perpetual futures trades on Injective using natural language. Supports market orders (open/close long or short), limit orders (place, list, cancel), and both Cosmos signing and EIP-712 MetaMask-compatible signing. Requires the Injective MCP server to be connected.
+name: injective-orderbook-trade
+description: Execute perpetual futures trades on Injective via the central limit orderbook using natural language. Supports market orders (open/close long or short), limit orders (place, list, cancel), and both Cosmos signing and EIP-712 MetaMask-compatible signing. Requires the Injective MCP server to be connected. For RFQ-based trading instead of orderbook, see `injective-rfq-trade`.
 license: MIT
 metadata:
   author: InjectiveLabs
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
-# Injective Trade Skill
+# Injective Orderbook Trade Skill
 
 ## Overview
 
-Execute perpetual futures trades on Injective via the MCP server. Supports market orders and limit orders with both Cosmos and EIP-712 signing paths.
+Execute perpetual futures trades on Injective's central limit orderbook via the MCP server. Supports market orders and limit orders with both Cosmos and EIP-712 signing paths.
+
+> **Orderbook vs RFQ.** This skill targets the on-chain CLOB. For takers who'd rather request quotes from market makers (often better fills on size), see `injective-rfq-trade`. For market makers responding to RFQ requests, see `injective-rfq-quote`. RFQ is currently testnet-only.
 
 ## Prerequisites
 
