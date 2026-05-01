@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-quote
-description: Provide liquidity as a market maker on Injective RFQ. Connect to MakerStream as a whitelisted maker, receive RFQ requests, sign quotes with EIP-712 v2, and stream them back to takers. Use when the user is operating an MM bot, building maker tooling, or testing the maker side of an RFQ flow. Covers the canonical decimal form trap, the full SignQuote typed-data layout, settlement update subscriptions, and the v2 signing helper. Testnet-only — mainnet rollout TBA. Pairs with `injective-rfq-mm-onboarding` (whitelist + AuthZ setup) and `injective-rfq-autosign` (session keys).
+description: Provide liquidity as a market maker on Injective RFQ. Connect to MakerStream as a whitelisted maker, receive RFQ requests, sign quotes with EIP-712 v2, and stream them back to takers. Use when the user is operating an MM bot, building maker tooling, or testing the maker side of an RFQ flow. Covers the canonical decimal form trap, the full SignQuote typed-data layout, settlement update subscriptions, and the v2 signing helper. Testnet-only — mainnet rollout TBA. Pairs with `injective-rfq-mm-onboarding` (whitelist + AuthZ setup) and `injective-rfq-autosign` (contract AuthZ grants).
 license: MIT
 metadata:
   author: ck
@@ -80,13 +80,16 @@ Every decimal field is hashed as `keccak256(utf8(s))`. `"4.5"` and `"4.50"` prod
 Run every decimal field through this helper before signing AND before putting it on the wire — they MUST be byte-identical:
 
 ```python
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
-def to_canonical(x, tick) -> str:
+def to_canonical(x, tick, rounding=ROUND_FLOOR) -> str:
     return format(
-        Decimal(str(x)).quantize(Decimal(str(tick)), rounding=ROUND_DOWN).normalize(),
+        Decimal(str(x)).quantize(Decimal(str(tick)), rounding=rounding).normalize(),
         "f",
     )
+
+def canonical_decimal(x) -> str:
+    return format(Decimal(str(x)).normalize(), "f")
 
 # 4.50      → "4.5"     (any fractional tick)
 # 76462.0   → "76462"   (BTC perp, tick "1")
@@ -138,12 +141,21 @@ mark = await price_fetcher.get_mark_price(request.market_id)
 spread = mark * Decimal("0.005")                  # 50 bps example
 if request.direction == "long":
     raw_price = mark + spread
+    price_rounding = ROUND_FLOOR
 else:
     raw_price = mark - spread
+    price_rounding = ROUND_CEILING
 
-quote_price = to_canonical(raw_price, price_tick)
-quote_qty   = to_canonical(min(your_capacity, Decimal(request.quantity)), qty_tick)
-quote_margin = quote_qty                          # 1x leverage example
+quote_price = to_canonical(raw_price, price_tick, rounding=price_rounding)
+
+request_margin = Decimal(request.margin)
+request_qty    = Decimal(request.quantity)
+quote_qty      = to_canonical(min(your_capacity, request_qty), qty_tick)
+
+if Decimal(quote_qty) == request_qty:
+    quote_margin = request.margin
+else:
+    quote_margin = canonical_decimal(request_margin * Decimal(quote_qty) / request_qty)
 
 expiry = int(time.time() * 1000) + 20_000          # 20s validity (live MM); keep ≥ 2s
 
@@ -176,6 +188,7 @@ await client.send_quote({
     "maker": mm.inj_address,
     "taker": request.request_address,
     "signature": sig,
+    "maker_subaccount_nonce": 0,
     "sign_mode": "v2",                            # required on the wire
     "chain_id": chain_id,
     "contract_address": contract,
@@ -207,6 +220,6 @@ These let you reconcile quotes against fills and update your inventory model.
 
 - [`injective-rfq-trade`](../injective-rfq-trade/) — the taker side; what your quote is being matched against.
 - [`injective-rfq-conditional-order`](../injective-rfq-conditional-order/) — TP/SL flow you may need to handle as an MM (quotes against intent-driven RFQs).
-- [`injective-rfq-autosign`](../injective-rfq-autosign/) — AuthZ session keys.
+- [`injective-rfq-autosign`](../injective-rfq-autosign/) — RFQ contract AuthZ grants.
 - [`injective-rfq-mm-onboarding`](../injective-rfq-mm-onboarding/) — first-time MM setup (whitelist + grants + smoke test).
 - [`injective-derivatives-market-data`](../injective-derivatives-market-data/) — tick sizes, oracle marks, fees.
