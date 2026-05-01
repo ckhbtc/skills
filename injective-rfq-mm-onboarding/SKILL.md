@@ -37,7 +37,7 @@ Reference walkthrough: [`https://rfq.inj.so/runbook.html`](https://rfq.inj.so/ru
 
 ## Step 1 — Whitelist registration (admin)
 
-The RFQ contract maintains a whitelist of approved makers. An admin runs `register_makers` once per maker address; without it, the indexer will route requests to your stream but the contract will reject any quote you sign with `maker not registered`.
+The RFQ contract maintains a whitelist of approved makers. An admin runs `register_makers` once per maker address; without it, you should not expect normal request routing, and any quote that reaches settlement will be rejected with `maker not registered`.
 
 ```bash
 # Admin runs this — you don't:
@@ -92,13 +92,13 @@ For mass MM provisioning across many wallets, use `injective-funding`.
 
 Before going live, run a real RFQ round-trip from your MM key:
 
-1. Run `examples/test_roundtrip.py` from `rfq-testing`. It spins up a retail wallet, sends an RFQ request, and waits for your MM (already connected) to respond with a quote.
+1. Run `examples/test_roundtrip.py` from `rfq-testing` with both `TESTNET_RETAIL_PRIVATE_KEY` and `TESTNET_MM_PRIVATE_KEY` set. It opens both TakerStream and MakerStream, sends an RFQ request, has the test MM sign a v2 quote, and waits for the quote ACK.
 2. The expected sequence:
    - Retail `request_ack` (rfq_id assigned)
-   - MM receives request on MakerStream
+   - Test MM receives request on MakerStream
    - MM signs + sends quote with `sign_mode="v2"`
    - Indexer ACKs the quote (`status="success"`)
-   - If `injective-rfq-trade` (`accept_quote`) is also exercised: contract settles the trade
+   - For settlement coverage, run `examples/test_settlement.py` after the quote round-trip passes.
 
 3. Watch for these specific failure modes:
    - `maker not registered` → step 1 didn't land; re-check whitelist
