@@ -48,6 +48,7 @@ Reference end-to-end: [`InjectiveLabs/rfq-testing`](https://github.com/Injective
 from rfq_test.config import get_environment_config
 from rfq_test.crypto.wallet import Wallet
 from rfq_test.clients.websocket import TakerStreamClient
+from decimal import Decimal
 import os, time, uuid
 
 env = get_environment_config()                       # RFQ_ENV=testnet
@@ -59,14 +60,13 @@ async with TakerStreamClient(env.indexer.ws_endpoint,
                              request_address=retail.inj_address) as client:
     rfq_id_hint = str(uuid.uuid4())
     ack = await client.send_request({
-        "request_address": retail.inj_address,
         "client_id": rfq_id_hint,                     # MUST be a UUID; indexer assigns the actual rfq_id
         "market_id": market.id,
         "direction": "long",
         "margin": "200",                              # canonical decimal — see "Decimal canonicalization" below
         "quantity": "10",
-        "worst_price": "15.50",                       # within 10% of mark; quantize to tick
-        "expiry": {"ts": int(time.time() * 1000) + 300_000},
+        "worst_price": "15.5",                        # canonical; quantize to price tick
+        "expiry": int(time.time() * 1000) + 300_000,
     }, wait_for_response=True)
     rfq_id = int(ack["rfq_id"])
 ```
@@ -77,12 +77,12 @@ async with TakerStreamClient(env.indexer.ws_endpoint,
     quotes = await client.collect_quotes(rfq_id=rfq_id, timeout=5.0, min_quotes=1)
 ```
 
-Each quote dict carries `maker`, `price`, `quantity`, `expiry`, `signature` (hex `0x`-prefixed), and `sign_mode` (always `"v2"`).
+Each quote dict carries `maker`, `margin`, `price`, `quantity`, `expiry`, `signature` (hex `0x`-prefixed), and `sign_mode` (always `"v2"`).
 
 ### 3. Pick the best (or aggregate across multiple)
 
 ```python
-    eligible = [q for q in quotes if Decimal(q["price"]) <= Decimal("15.50")]
+    eligible = [q for q in quotes if Decimal(q["price"]) <= Decimal("15.5")]
     eligible.sort(key=lambda q: Decimal(q["price"]))
     best = eligible[0]
 ```
@@ -106,14 +106,14 @@ tx = await contract_client.accept_quote(
         "price": best["price"],                       # MUST be byte-identical to the signed price
         "expiry": best["expiry"],
         "signature": best["signature"],
-        "sign_mode": best.get("sign_mode", "v2"),     # forward as-is; defaults to "auto" if absent
+        "sign_mode": best.get("sign_mode", "v2"),     # forward as-is; use v2 explicitly
     }],
     rfq_id=rfq_id,
     market_id=market.id,
     direction=Direction.LONG,
     margin=Decimal("200"),
     quantity=Decimal("10"),
-    worst_price=Decimal("15.50"),
+    worst_price=Decimal("15.5"),
     unfilled_action={"market": {}},                   # see "Unfilled action" below
 )
 ```
@@ -127,11 +127,11 @@ The indexer rejects non-canonical decimals on every request and quote field. `"1
 Run every decimal field (margin, quantity, worst_price, price, min_fill_quantity) through this helper before signing or sending:
 
 ```python
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
-def to_canonical(x, tick) -> str:
+def to_canonical(x, tick, rounding=ROUND_FLOOR) -> str:
     return format(
-        Decimal(str(x)).quantize(Decimal(str(tick)), rounding=ROUND_DOWN).normalize(),
+        Decimal(str(x)).quantize(Decimal(str(tick)), rounding=rounding).normalize(),
         "f",
     )
 
@@ -142,9 +142,11 @@ def to_canonical(x, tick) -> str:
 
 Symptom of getting this wrong: `quote_failed: <field> "76462.0": not in canonical decimal form (use plain notation without trailing zeros or scientific notation)`.
 
+For request `worst_price`, round from the taker's perspective: long requests use `ROUND_CEILING` because it is the maximum price the taker will pay; short requests use `ROUND_FLOOR` because it is the minimum price the taker will accept. Quantities should always floor so the request never exceeds the intended size.
+
 ## Slippage band (worst_price ↔ oracle mark)
 
-The contract enforces `worst_price` against the oracle mark price for the market:
+`worst_price` is the taker's price protection. Current testnet validation also rejects requests outside the configured mark-price band:
 
 - **Long**: `worst_price ≤ mark × 1.10` (default 10% slippage cap)
 - **Short**: `worst_price ≥ mark × 0.90`
@@ -155,7 +157,7 @@ Pull the mark from `injective-derivatives-market-data` (`market_price BTC`) and 
 
 If the requested quantity isn't fully covered by the selected quotes, the contract can:
 
-- `{"market": {}}` — post the unfilled remainder as a market order on the orderbook (typical for "fill at any price").
+- `{"market": {}}` — post the unfilled remainder as an IOC/market fallback on the orderbook, still bounded by `worst_price`.
 - `{"limit": {"price": "<canonical>"}}` — post a resting limit order at that price.
 - Omit / `null` — reject if not fully covered.
 
@@ -174,6 +176,6 @@ If the requested quantity isn't fully covered by the selected quotes, the contra
 
 - [`injective-rfq-quote`](../injective-rfq-quote/) — the maker side; how an MM signs and responds to your request.
 - [`injective-rfq-conditional-order`](../injective-rfq-conditional-order/) — pre-sign TP/SL intents that fire automatically on mark price.
-- [`injective-rfq-autosign`](../injective-rfq-autosign/) — AuthZ session keys for the RFQ contract.
+- [`injective-rfq-autosign`](../injective-rfq-autosign/) — AuthZ grants for the RFQ contract.
 - [`injective-orderbook-trade`](../injective-orderbook-trade/) — alternative venue: place orders directly on the central orderbook.
 - [`injective-positions`](../injective-positions/) — close / flatten existing positions (orderbook + RFQ).
