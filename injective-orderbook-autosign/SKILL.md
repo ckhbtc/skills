@@ -1,17 +1,19 @@
 ---
-name: injective-autosign
-description: Set up AuthZ delegation on Injective for session-based auto-trading. Grants a scoped, time-limited permission to an ephemeral key so the AI can place and close perpetual trades without a wallet popup or password prompt for every order. Use authz_grant to enable, authz_revoke to disable. Requires the Injective MCP server to be connected.
+name: injective-orderbook-autosign
+description: Set up AuthZ delegation on Injective for session-based auto-trading on the central orderbook. Grants a scoped, time-limited permission to an ephemeral key so the AI can place and close perpetual trades without a wallet popup or password prompt for every order. Use authz_grant to enable, authz_revoke to disable. Requires the Injective MCP server to be connected. For RFQ-contract grants, see `injective-rfq-autosign`.
 license: MIT
 metadata:
   author: InjectiveLabs
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
-# Injective AutoSign Skill
+# Injective Orderbook AutoSign Skill
 
 ## Overview
 
-AuthZ delegation lets a user grant a scoped, on-chain permission to a secondary key (the "grantee") to execute specific message types on their behalf. This enables session-based trading without password prompts per trade.
+AuthZ delegation lets a user grant a scoped, on-chain permission to a secondary key (the "grantee") to execute specific message types on their behalf. This enables session-based trading on the orderbook without password prompts per trade.
+
+> **Orderbook vs RFQ.** This skill grants permission for the exchange-module message types that the central orderbook uses. RFQ trading executes through the RFQ CosmWasm contract and needs a different set of grants — see `injective-rfq-autosign`.
 
 **Security model**: The grant is scoped to specific Cosmos message types (trading only — no withdrawals or transfers). It expires automatically. The user can revoke at any time.
 

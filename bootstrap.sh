@@ -27,6 +27,31 @@ mkdir -p "$TARGET_DIR"
 linked=0
 skipped=0
 existing=0
+removed_stale=0
+
+RENAMED_SKILLS=(
+  "injective-trade:injective-orderbook-trade"
+  "injective-autosign:injective-orderbook-autosign"
+  "injective-market-data:injective-derivatives-market-data"
+)
+
+for rename in "${RENAMED_SKILLS[@]}"; do
+  old_name="${rename%%:*}"
+  new_name="${rename#*:}"
+  link_path="$TARGET_DIR/$old_name"
+  expected_old="../../.agents/skills/$old_name"
+
+  if [[ ! -L "$link_path" ]]; then
+    continue
+  fi
+
+  current_target="$(readlink "$link_path")"
+  if [[ "$current_target" == "$expected_old" && -f "$REPO_DIR/$new_name/SKILL.md" ]]; then
+    rm "$link_path"
+    removed_stale=$((removed_stale+1))
+    echo "removed stale symlink: $link_path (renamed to $new_name)"
+  fi
+done
 
 for skill_path in "$REPO_DIR"/*/; do
   name="$(basename "$skill_path")"
@@ -62,4 +87,4 @@ for skill_path in "$REPO_DIR"/*/; do
 done
 
 echo ""
-echo "summary: $linked new symlink(s), $skipped already correct, $existing existing path(s) left alone"
+echo "summary: $linked new symlink(s), $skipped already correct, $removed_stale stale symlink(s) removed, $existing existing path(s) left alone"
