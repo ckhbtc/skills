@@ -12,7 +12,7 @@ Personal Claude Code skills — Injective-focused trading + ops tools, plus a fe
 | [`injective-orderbook-trade`](./injective-orderbook-trade/) | Market + limit order trading on the central orderbook (Cosmos & EIP-712 signing) |
 | [`injective-positions`](./injective-positions/) | Query, close, flatten derivative positions across many wallets |
 | [`injective-bridge`](./injective-bridge/) | Cross-chain bridging via deBridge DLN + Peggy |
-| [`injective-autosign`](./injective-autosign/) | AuthZ delegation for session-based auto-trading |
+| [`injective-orderbook-autosign`](./injective-orderbook-autosign/) | AuthZ delegation for session-based auto-trading on the orderbook |
 | [`injective-authz-ops`](./injective-authz-ops/) | Mass-grant / manage AuthZ permissions |
 | [`injective-funding`](./injective-funding/) | Mass-fund wallets (INJ/USDT/USDC), public faucet pattern |
 | [`injective-wallet-ops`](./injective-wallet-ops/) | Mass create/derive wallets, address conversion |
