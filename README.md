@@ -7,6 +7,7 @@ Personal Claude Code skills — Injective-focused trading + ops tools, plus a fe
 | Skill | Description |
 |---|---|
 | [`injective-derivatives-market-data`](./injective-derivatives-market-data/) | Real-time perpetuals market prices and metadata (orderbook + RFQ) |
+| [`injective-frontend-wallet`](./injective-frontend-wallet/) | Build, review, debug browser frontends signing Injective txs (Keplr/Leap/MetaMask, CosmJS, ethsecp256k1, EthAccount) |
 | [`injective-account`](./injective-account/) | Wallet balances, subaccount balances, open positions + P&L |
 | [`injective-token`](./injective-token/) | Token metadata, transfers, subaccount deposit/withdraw |
 | [`injective-orderbook-trade`](./injective-orderbook-trade/) | Market + limit order trading on the central orderbook (Cosmos & EIP-712 signing) |
