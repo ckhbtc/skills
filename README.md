@@ -31,38 +31,53 @@ Personal Claude Code skills — Injective-focused trading + ops tools, plus a fe
 
 ## Layout
 
-The canonical files live in this repo. Claude Code loads skills from `~/.claude/skills/`, so each skill is exposed there as a symlink pointing back into this repo:
+The repo lives in `~/dev/skills/` alongside other projects. Skills reach Claude Code through a two-hop symlink chain:
 
 ```
-~/.claude/skills/<name>  ->  ../../.agents/skills/<name>
+~/dev/skills/<name>/                <-- source of truth (this repo)
+~/.agents/skills/<name>   ->  ~/dev/skills/<name>             <-- symlink farm (per-skill symlinks)
+~/.claude/skills/<name>   ->  ../../.agents/skills/<name>     <-- loaded view (per-skill symlinks)
 ```
 
-That way you edit in one place and Claude Code reads from one place.
+`~/.agents/skills/` is a real directory — a **symlink farm** that can hold entries from multiple source repos at once. `bootstrap.sh` creates both layers in one pass.
+
+### Multi-source note
+
+The farm is shared across three source dirs. Only this repo's skills are managed by `bootstrap.sh`; the others get linked in manually (one-time).
+
+| Source dir | What lives there | How to add |
+|---|---|---|
+| `~/dev/skills/` | This repo. Personal skills. | `git pull && ./bootstrap.sh` |
+| `~/dev/matt-pocock-skills/` | 3rd-party skills (not a repo). | `ln -s ~/dev/matt-pocock-skills/<name> ~/.agents/skills/<name>` then `./bootstrap.sh` |
+| `~/dev/agent-skills/skills/` | `InjectiveLabs/agent-skills` (work). | `ln -s ~/dev/agent-skills/skills/<name> ~/.agents/skills/<name>` then `./bootstrap.sh` |
+
+Rule of thumb: the directory name in `~/dev/` tells you which repo you're committing to. Don't cross the streams — personal skills don't go in the org repo, org skills don't get committed here.
 
 ## Setup on a new machine
 
 ```bash
-# 1. Clone
-git clone git@github.com:ckhbtc/skills.git ~/.agents/skills
+# 1. Clone to ~/dev/skills (or anywhere — bootstrap auto-detects its location)
+git clone git@github.com:ckhbtc/skills.git ~/dev/skills
 
-# 2. Symlink every skill into ~/.claude/skills/
-~/.agents/skills/bootstrap.sh
+# 2. Run bootstrap — it creates the farm at ~/.agents/skills/ and links
+#    every skill in this repo into both layers.
+~/dev/skills/bootstrap.sh
 ```
 
-`bootstrap.sh` is idempotent. Re-run it after `git pull` to pick up any new skills.
+`bootstrap.sh` is idempotent. Re-run after `git pull` to pick up new skills, or after manually adding a symlink to the farm from another source.
 
 ## Editing
 
-Edit files in `~/.agents/skills/<name>/`. `~/.claude/skills/<name>/` is just a symlink — touching it edits the same file. After editing:
+Edit files in `~/dev/skills/<name>/`. `~/.agents/skills/<name>/` and `~/.claude/skills/<name>/` resolve through the chain to the same files, but `git status` only works from `~/dev/skills`. After editing:
 
 ```bash
-cd ~/.agents/skills
+cd ~/dev/skills
 git add <name>/
 git commit -m "feat(<name>): ..."
 git push
 ```
 
-Then on other machines: `git pull && ./bootstrap.sh` (the bootstrap is needed only if the pull added a new skill directory).
+Then on other machines: `git pull && ./bootstrap.sh` (bootstrap is only needed if the pull added a new skill directory).
 
 ## Prerequisites
 

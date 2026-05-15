@@ -1,4 +1,5 @@
 .DS_Store
+.claude/
 
 # Untracked skills present in this working tree but managed elsewhere
 # (Anthropic-bundled skills, third-party skills, or InjectiveLabs/agent-skills items).
@@ -23,6 +24,7 @@ skill-creator/
 slack/
 ui-ux-pro-max/
 vercel-react-best-practices/
+vibe-check/
 vue-best-practices/
 web-design-guidelines/
 xlsx/
