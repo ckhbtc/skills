@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-trade
-description: Take perpetual futures positions on Injective via RFQ — quote-based trading instead of the central orderbook. Sends an RFQ request, collects quotes from whitelisted market makers within a time window, picks the best by price, and accepts on-chain via the RFQ CosmWasm contract. Use when the user wants to take a derivative position via RFQ (often better fills on size than walking the orderbook) or when the orderbook lacks depth for the requested quantity. Testnet-only — mainnet rollout TBA. Pairs with `injective-rfq-autosign` (AuthZ grants for the RFQ contract) and `injective-derivatives-market-data` (tick sizes, oracle marks).
+description: Take perpetual futures positions on Injective via RFQ — quote-based trading instead of the central orderbook. Sends an RFQ request, collects quotes from whitelisted market makers within a time window, picks the best by price, and accepts on-chain via the RFQ CosmWasm contract. Use when the user wants to take a derivative position via RFQ (often better fills on size than walking the orderbook) or when the orderbook lacks depth for the requested quantity. Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`; testnet examples remain available. Pairs with `injective-rfq-autosign` (AuthZ grants for the RFQ contract) and `injective-derivatives-market-data` (tick sizes, oracle marks).
 license: MIT
 metadata:
   author: ck
@@ -9,7 +9,7 @@ metadata:
 
 # Injective RFQ Trade Skill (taker)
 
-> **Testnet-only.** RFQ is not on mainnet yet; rollout TBA.
+> **Mainnet RFQ contract:** `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`. Testnet examples below still use testnet endpoints.
 
 ## Overview
 
@@ -37,7 +37,8 @@ Reference end-to-end: [`InjectiveLabs/rfq-testing`](https://github.com/Injective
 |---|---|
 | Cosmos chain ID | `injective-888` |
 | EVM chain ID (EIP-712 domain) | `1439` |
-| RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Testnet RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Mainnet RFQ contract | `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` |
 | TakerStream WSS | `wss://testnet.rfq.ws.injective.network/injective_rfq_rpc.InjectiveRfqRPC/TakerStream` |
 
 ## Workflow

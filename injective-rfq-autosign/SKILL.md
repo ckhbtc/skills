@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-autosign
-description: Set up AuthZ delegation for trading via the Injective RFQ contract. Grants `MsgSend` + `MsgPrivilegedExecuteContract` to the RFQ contract address with `expiration: null` and `GenericAuthorization`, so quotes / accept-quote / signed-intent flows can settle without a wallet popup per tx. Distinct from `injective-orderbook-autosign`: the RFQ flow uses the CosmWasm contract's privileged execute path, not the exchange-module message types. Both MM and Retail need both grants. Testnet-only — mainnet rollout TBA.
+description: Set up AuthZ delegation for trading via the Injective RFQ contract. Grants `MsgSend` + `MsgPrivilegedExecuteContract` to the RFQ contract address with `expiration: null` and `GenericAuthorization`, so quotes / accept-quote / signed-intent flows can settle without a wallet popup per tx. Distinct from `injective-orderbook-autosign`: the RFQ flow uses the CosmWasm contract's privileged execute path, not the exchange-module message types. Both MM and Retail need both grants. Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`; testnet examples remain available.
 license: MIT
 metadata:
   author: ck
@@ -9,7 +9,7 @@ metadata:
 
 # Injective RFQ AutoSign Skill
 
-> **Testnet-only.** RFQ is not on mainnet yet; rollout TBA.
+> **Mainnet RFQ contract:** `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`. Testnet examples below still use testnet endpoints.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-quote
-description: Provide liquidity as a market maker on Injective RFQ. Connect to MakerStream as a whitelisted maker, receive RFQ requests, sign quotes with EIP-712 v2, and stream them back to takers. Use when the user is operating an MM bot, building maker tooling, or testing the maker side of an RFQ flow. Covers the canonical decimal form trap, the full SignQuote typed-data layout, settlement update subscriptions, and the v2 signing helper. Testnet-only — mainnet rollout TBA. Pairs with `injective-rfq-mm-onboarding` (whitelist + AuthZ setup) and `injective-rfq-autosign` (contract AuthZ grants).
+description: Provide liquidity as a market maker on Injective RFQ. Connect to MakerStream as a whitelisted maker, receive RFQ requests, sign quotes with EIP-712 v2, and stream them back to takers. Use when the user is operating an MM bot, building maker tooling, or testing the maker side of an RFQ flow. Covers the canonical decimal form trap, the full SignQuote typed-data layout, settlement update subscriptions, and the v2 signing helper. Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`; testnet examples remain available. Pairs with `injective-rfq-mm-onboarding` (whitelist + AuthZ setup) and `injective-rfq-autosign` (contract AuthZ grants).
 license: MIT
 metadata:
   author: ck
@@ -9,7 +9,7 @@ metadata:
 
 # Injective RFQ Quote Skill (maker)
 
-> **Testnet-only.** RFQ is not on mainnet yet; rollout TBA.
+> **Mainnet RFQ contract:** `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`. Testnet examples below still use testnet endpoints.
 
 ## Overview
 
@@ -34,7 +34,8 @@ Reference end-to-end: [`InjectiveLabs/rfq-testing`](https://github.com/Injective
 |---|---|
 | Cosmos chain ID | `injective-888` |
 | EVM chain ID (EIP-712 domain) | `1439` |
-| RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Testnet RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Mainnet RFQ contract | `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` |
 | MakerStream WSS | `wss://testnet.rfq.ws.injective.network/injective_rfq_rpc.InjectiveRfqRPC/MakerStream` |
 
 ## EIP-712 v2 signing — what's actually signed
