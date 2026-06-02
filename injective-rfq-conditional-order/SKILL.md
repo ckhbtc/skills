@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-conditional-order
-description: Pre-sign TP/SL conditional orders on Injective RFQ that fire automatically when the mark price crosses a trigger threshold. Sign a SignedTakerIntent with EIP-712 v2, submit via TakerStream `conditional_order` or REST `/v1/conditionalOrder`, and track the `epoch` / `lane_version` counters used for replay protection and cancellation. Use when the user wants take-profit or stop-loss on an open position without staying online to send the close. Reduce-only (`margin="0"`); supports `mark_price_gte`, `mark_price_lte`, and `immediate` triggers. Cancel via `CancelIntentLane` (per market) or `CancelAllIntents` (global). Testnet-only — mainnet rollout TBA.
+description: Pre-sign TP/SL conditional orders on Injective RFQ that fire automatically when the mark price crosses a trigger threshold. Sign a SignedTakerIntent with EIP-712 v2, submit via TakerStream `conditional_order` or REST `/v1/conditionalOrder`, and track the `epoch` / `lane_version` counters used for replay protection and cancellation. Use when the user wants take-profit or stop-loss on an open position without staying online to send the close. Reduce-only (`margin="0"`); supports `mark_price_gte`, `mark_price_lte`, and `immediate` triggers. Cancel via `CancelIntentLane` (per market) or `CancelAllIntents` (global). Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`; testnet examples remain available.
 license: MIT
 metadata:
   author: ck
@@ -9,7 +9,7 @@ metadata:
 
 # Injective RFQ Conditional Order Skill (TP/SL signed intents)
 
-> **Testnet-only.** RFQ is not on mainnet yet; rollout TBA.
+> **Mainnet RFQ contract:** `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k`. Testnet examples below still use testnet endpoints.
 
 ## Overview
 
@@ -57,7 +57,8 @@ Track both per-taker and increment after each on-chain cancel. Intents signed wi
 |---|---|
 | Cosmos chain ID | `injective-888` |
 | EVM chain ID (EIP-712 domain) | `1439` |
-| RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Testnet RFQ contract | `inj1qw7jk82hjvf79tnjykux6zacuh9gl0z0wl3ruk` |
+| Mainnet RFQ contract | `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` |
 | TakerStream WSS | `wss://testnet.rfq.ws.injective.network/injective_rfq_rpc.InjectiveRfqRPC/TakerStream` |
 | REST conditional-order endpoint | `POST {indexer_http_endpoint}/v1/conditionalOrder` |
 

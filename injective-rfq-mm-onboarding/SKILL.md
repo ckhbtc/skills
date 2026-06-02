@@ -1,6 +1,6 @@
 ---
 name: injective-rfq-mm-onboarding
-description: One-shot onboarding workflow for becoming a market maker on Injective RFQ. Walks through the four prerequisites — whitelist registration (admin-gated), AuthZ grants on the RFQ contract, USDC + INJ balance prep, and an end-to-end smoke test — in the order they need to happen. Use when the user is setting up an MM bot for the first time, after a wallet rotation, or troubleshooting a "maker not registered" / "authorization not found" rejection. Pulls together `injective-rfq-autosign` + `injective-rfq-quote` + `injective-funding`. Testnet-only — mainnet rollout TBA.
+description: One-shot onboarding workflow for becoming a market maker on Injective RFQ. Walks through the four prerequisites — whitelist registration (admin-gated), AuthZ grants on the RFQ contract, USDC + INJ balance prep, and an end-to-end smoke test — in the order they need to happen. Use when the user is setting up an MM bot for the first time, after a wallet rotation, or troubleshooting a "maker not registered" / "authorization not found" rejection. Pulls together `injective-rfq-autosign` + `injective-rfq-quote` + `injective-funding`. Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` (takes effect June 3); testnet examples remain available.
 license: MIT
 metadata:
   author: ck
@@ -9,7 +9,7 @@ metadata:
 
 # Injective RFQ MM Onboarding Skill
 
-> **Testnet-only.** RFQ is not on mainnet yet; rollout TBA.
+> **Mainnet RFQ contract:** `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` (takes effect June 3). Testnet examples below still use testnet endpoints.
 
 ## Overview
 
@@ -28,6 +28,8 @@ This skill is the orchestrator. The actual primitives live in:
 - `InjectiveLabs/rfq-testing` `scripts/register_makers.py` — step 1
 
 Reference walkthrough: [`https://rfq.inj.so/runbook.html`](https://rfq.inj.so/runbook.html).
+
+Mainnet RFQ contract: `inj12stwq95jet57edcu4a65r48r46s9rzrs938n8k` (takes effect June 3).
 
 ## Prerequisites you bring
 
