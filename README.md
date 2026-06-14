@@ -25,7 +25,6 @@ Personal Claude Code skills — Injective-focused trading + ops tools, plus a fe
 | [`injective-staking`](./injective-staking/) | Staking delegations, rewards, validator queries |
 | [`injective-chain-analysis`](./injective-chain-analysis/) | Read injective-core Go source, exchange module specs |
 | [`injective-x402`](./injective-x402/) | Pay-per-query APIs using x402 protocol on Injective EVM |
-| [`injective-slack-alert`](./injective-slack-alert/) | Build a Slack alert daemon (Node.js + Express + cron + sqlite + Slack WebClient) |
 | [`lightsail-deploy`](./lightsail-deploy/) | Deploy any Node.js project to AWS Lightsail via SSH + PM2 |
 | [`blog-writer`](./blog-writer/) | Write product-announcement blog posts and technical articles |
 | [`data-analysis`](./data-analysis/) | Analyze CSV/time-series trading data, generate charts |
