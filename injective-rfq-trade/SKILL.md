@@ -162,6 +162,16 @@ If the requested quantity isn't fully covered by the selected quotes, the contra
 - `{"limit": {"price": "<canonical>"}}` — post a resting limit order at that price.
 - Omit / `null` — reject if not fully covered.
 
+## Browser taker UX lessons
+
+When integrating RFQ taker flow into a browser app, keep protocol details out of user-facing states and serialize trade submission:
+
+- Prequote or warm RFQ requests can improve click-time latency, but still validate quote freshness, maker allowlists, slippage, and prepared RFQ input at final submit time.
+- Treat `no quotes received within wait time [rfqID: ... taker: ...]` as an internal diagnostic. User-facing copy should be short, e.g. `Order failed, please try again.` Log the RFQ ID/taker details for developers instead.
+- Disable all trade buttons for the wallet while an open or close RFQ is in flight. Matching is not enough; release the lock only after the accept tx is confirmed or the flow fails.
+- Do not let parallel RFQ accepts from the same wallet race the account sequence. One per-wallet in-flight lock is safer than per-card or per-position loading state.
+- If a UI searches markets, prefer scroll-and-highlight over filtering cards out of the grid. Filtering can resize the target card and make the trading form feel unstable.
+
 ## Common errors
 
 | Error contains | Cause | Fix |
