@@ -198,6 +198,16 @@ The browser sends the grantee `privateKeyHex` to the server right after the gran
 
 Either way, the **on-chain AuthZ grant** is identical — same `MsgGrant`, same scoping, same expiration, same revoke path. The choice is purely about who *holds* the grantee key after grant.
 
+## Browser readiness and session validation
+
+For trading frontends, distinguish wallet connection, on-chain grant existence, and app readiness:
+
+- A connected wallet is not enough; the UI should show trading as unavailable until the AuthZ grant, grantee key, fee path, and current wallet address all line up.
+- Revalidate the local grantee/session bundle against the active granter `inj1` address after connect, account swap, reload, and revoke. Stale session state from a prior wallet should force a fresh grant.
+- Do not hide an on-chain revoke failure by clearing local state first. Broadcast `MsgRevoke`, verify success, then clear the local session bundle.
+- In browser apps with trade buttons, keep a single in-flight trade lock for the active granter/grantee pair. Release it only once broadcast confirmation or failure is known.
+- Use user-facing status copy such as `Authorize wallet`, `Order pending`, or `Order failed, please try again.` Keep sequence numbers, raw CheckTx logs, and tx internals in developer logs.
+
 ## Practical lessons (client-custody)
 
 These show up the first time you build a real client-custody AuthZ app. Worth handling up front.
