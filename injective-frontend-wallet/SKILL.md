@@ -41,6 +41,16 @@ Before calling the work complete, verify these on the actual signing path:
 - For direct signing, sign the `SignDoc` that contains that Injective pubkey in `authInfoBytes`; otherwise the wallet signs bytes that differ from the broadcast transaction.
 - Use the wallet address returned for chain `injective-1`; do not derive or substitute addresses from another chain account without conversion checks.
 
+## Browser Trading Flow Checks
+
+Browser trading apps need UI-level guards in addition to correct signing bytes:
+
+- Keep a single per-wallet in-flight lock around transaction-producing actions. Disable open, close, cash-out, and bulk action buttons until the prior tx is confirmed or has failed.
+- Do not rely on per-card loading state to prevent duplicate broadcasts; two buttons can still race the same account sequence.
+- Revalidate any local session, grantee, or autosign token against the currently connected `inj1` address after wallet connect, account swap, and page reload.
+- Treat `account sequence mismatch, expected X, got Y` as a likely concurrency bug first. Audit parallel clicks, multiple tabs, stale cached sequence, and background retries before changing chain parameters.
+- Keep raw CheckTx details in logs. User-facing errors should explain the action, e.g. `Order failed, please try again.`, not expose transaction hashes, RFQ IDs, account sequences, or signer internals.
+
 ## Common Failures
 
 If the error is:
