@@ -82,6 +82,16 @@ The script:
 
 If the user is not scripting and just wants a UI, point them at **https://usdc.inj.so**. It does the same 5-step flow with whatever EIP-1193 wallet they have (MetaMask, Rabby, Coinbase Wallet, Frame, etc.). Source: [github.com/ckhbtc/usdc-widget](https://github.com/ckhbtc/usdc-widget).
 
+## Trading app USDC balance UX
+
+When CCTP or bridge funding feeds a trading frontend, make the balance display conservative:
+
+- Default trade amount inputs blank. Do not prefill `$100` or any fixed stake; many wallets have less, and a prefilled over-balance amount creates an avoidable `Need cash` state.
+- Let explicit controls such as Half / All-In populate amounts from the current visible USDC balance.
+- Truncate displayed USDC balances instead of rounding up, so the UI never implies spendable funds that may not exist after decimals, fees, or stale indexer data.
+- After a bridge or CCTP mint, consider a short-lived local balance floor from the confirmed tx amount while indexer/LCD totals catch up. Clear the floor once the authoritative balance equals or exceeds it, or when it expires.
+- Keep native USDC denoms explicit in code and logs. On Injective EVM the asset is `0xa00C59fF5a080D2b954d0c75e46E22a0c371235a`; on Cosmos bank views it appears as `erc20:0xa00C59fF5a080D2b954d0c75e46E22a0c371235a`.
+
 ## Recovery — stuck transfer
 
 If the burn went through but the mint never landed (tab crashed, wrong network, ran out of gas, etc.), the funds are NOT lost — they're held by the attestation, waiting for someone to submit the mint. Recovery:
