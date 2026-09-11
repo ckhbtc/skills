@@ -4,7 +4,7 @@ description: Take perpetual futures positions on Injective via RFQ — quote-bas
 license: MIT
 metadata:
   author: ck
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Injective RFQ Trade Skill (taker)
@@ -19,7 +19,7 @@ The taker flow:
 
 1. Open a TakerStream WebSocket and send a `CreateRFQRequestType` for `(market_id, direction, margin, quantity, worst_price)`.
 2. The indexer fans the request out to every whitelisted MM. They sign quotes with EIP-712 v2 and stream them back.
-3. Collect quotes within a window (typically 2–5s) until you have at least one acceptable quote.
+3. Collect quotes for 500 ms after the request is acknowledged, then rank the acceptable responses. This is the production integration window; do not substitute a multi-second window unless the caller explicitly requires it.
 4. Build a CosmWasm `accept_quote` message with one or more quotes (the contract walks the array in order, filling from each until your total quantity is covered) and broadcast.
 
 Reference end-to-end: [`InjectiveLabs/rfq-testing`](https://github.com/InjectiveLabs/rfq-testing) → `examples/test_settlement.py` (single quote) and `examples/taker_multi_quote.py` (aggregate across MMs).
@@ -75,7 +75,7 @@ async with TakerStreamClient(env.indexer.ws_endpoint,
 ### 2. Collect quotes within a window
 
 ```python
-    quotes = await client.collect_quotes(rfq_id=rfq_id, timeout=5.0, min_quotes=1)
+    quotes = await client.collect_quotes(rfq_id=rfq_id, timeout=0.5, min_quotes=1)
 ```
 
 Each quote dict carries `maker`, `margin`, `price`, `quantity`, `expiry`, `signature` (hex `0x`-prefixed), and `sign_mode` (always `"v2"`).
