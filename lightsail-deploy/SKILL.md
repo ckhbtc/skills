@@ -4,7 +4,7 @@ description: Deploy a Node.js project to an AWS Lightsail, OVH, or other Linux s
 license: MIT
 metadata:
   author: ck
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Lightsail Deploy Skill
