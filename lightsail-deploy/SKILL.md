@@ -1,6 +1,6 @@
 ---
 name: lightsail-deploy
-description: Deploy a Node.js project to an AWS Lightsail server via SSH, rsync, PM2, nginx, and trusted HTTPS. Handles first-time production launches, Let's Encrypt certificates for domains or static IP addresses, automated renewal, firewall verification, and public health checks. Use when the user says "deploy", "push to server", "update the server", "ship it", or asks to launch a new product on Lightsail.
+description: Deploy a Node.js project to an AWS Lightsail, OVH, or other Linux server via SSH, rsync, PM2, nginx, and trusted HTTPS. Handles first-time production launches, mandatory health.ckh.dev fleet registration, Let's Encrypt certificates for domains or static IP addresses, automated renewal, firewall verification, and public health checks. Use when the user says "deploy", "push to server", "update the server", "ship it", or asks to launch a new product on a server.
 license: MIT
 metadata:
   author: ck
@@ -41,6 +41,28 @@ Server location info can drift. Before deploying, verify with:
 dig +short <domain>                                      # DNS points where you think
 ssh -i <ssh_key> <host> "pm2 list | grep <pm2_process>"  # process exists where you think
 ```
+
+## Mandatory health registration
+
+Before declaring any deployment complete, invoke the `health-ckh-dev` skill for
+the target host. This gate applies to first deployments and newly discovered
+servers across Lightsail, OVH, and other Linux providers.
+
+1. Check whether the host already has a registered collector in
+   `health.ckh.dev`. If it does, register the new PM2 process in its durable
+   expected inventory. If it does not, install and verify a loopback-bound
+   health collector, its restricted nginx route, and a unique token.
+2. Add the exact PM2 processes whose absence should fail fleet health. Do not
+   guess names or mark a stopped process ignored without an explicit reason.
+3. Verify the target collector and service routes from Tokyo, then verify the
+   authenticated dashboard catalog and overall route.
+4. Only after those checks pass may the deployment be reported as complete.
+
+If SSH access, the collector route, or the firewall path is unavailable, report
+that precise blocker and leave the deployment incomplete. Do not add a
+placeholder server to the dashboard, claim it is monitored, or skip the health
+gate because the host is OVH or because the application itself deployed
+successfully.
 
 ## Workflow
 
