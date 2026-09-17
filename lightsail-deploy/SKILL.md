@@ -112,6 +112,27 @@ curl -s -o /dev/null -w "%{http_code}\n" https://<static_server_ip>/health
 ssh -i <ssh_key> <host> "pm2 logs <pm2_process> --lines 30 --nostream"
 ```
 
+### PM2 boot persistence is mandatory
+
+Every deployed server must recover its intended PM2 inventory after a reboot.
+Before calling deployment complete:
+
+1. Confirm an enabled systemd PM2 startup unit exists for the exact Node
+   runtime and `PM2_HOME` (`systemctl is-enabled pm2-<user>` or the host's
+   equivalent).
+2. Confirm the saved PM2 dump contains the pre-existing application processes
+   plus the newly deployed process. Preserve the dump before changing it, and
+   never overwrite it with a collector-only `pm2 save`.
+3. Ensure the health collector startup is ordered after application PM2
+   restoration, so a post-reboot snapshot includes the complete inventory.
+4. Run `systemd-analyze verify` on any new unit and report the persistence
+   check. Do not reboot or resurrect trading processes as a verification step
+   without explicit operator authorization.
+
+If no PM2 startup unit exists, install one with the server's actual Node path,
+user, and `PM2_HOME`, enable it, and preserve the existing dump. A deployment
+that works only until the next reboot is incomplete.
+
 ## HTTPS is part of done
 
 Every new public product must ship with trusted HTTPS during its initial deployment. Do not leave an authenticated dashboard, login form, API credential, wallet view, or other product endpoint on plain HTTP because a domain is not ready.
